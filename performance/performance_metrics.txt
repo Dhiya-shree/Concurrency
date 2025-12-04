@@ -1,0 +1,33 @@
+Latency :
+   Time taken to complete task 
+   1 task = t time secs 
+   Latency = t secs 
+   Break task into N sub tasks , latency = N/t
+
+Subtask :
+no of subtask = n of cores
+Above is optimal only when threads are runnable without io blocking calls/ sleep
+Hyperthreading :
+Single physical core running two virtual cores 
+
+Parallelizable tasks - easily breakable 
+Sequential Task -.single threaded 
+Partial Task 
+
+Throughput :
+  Amount of task completed in a given time 
+  task/time unit 
+
+  N task completes in t time 
+  Throughput : N/T 
+
+  1--> Divide task into subtask 
+      not efficient 
+      contextswitching difficult
+
+ --> Running task in parallel
+       Best if each task inddependent 
+       But need to createthread and schedule 
+        ==> THREAD POOLING can be done  
+
+
