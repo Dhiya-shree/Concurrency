@@ -1,0 +1,100 @@
+Memory allocation :
+
+Stack :
+Local primitive 
+Local References 
+Exclusive to 1 thread
+
+Heap :
+Objects 
+Class members 
+Static variables 
+Shared between threads 
+
+Shared memory resources cause => race conditions
+
+To avoid race conditions:
+1) Atomic variables - some operations provided sync 
+2) Synchronized - monitor => methos sync 
+3) Synchronized -lock => Object sync , Sync(this)
+       Sync implements Reentrant lock 
+       Same thread can acquire lock many times 
+
+
+Excessive Sync :
+   => One thread at a time
+   => Worse than single thread 
+   => Multiple thread , no concurrent / parallel processing 
+        => More context switching ===> More resource wastage 
+  
+Use Sync less ==> To get more multithread benefit 
+
+Operations that are no atomic and in heap 
+that might cause Race Condt ? Use Sync 
+
+All reference assignment=>  Atomic
+Getters,Setters - atomic 
+Primitive types (except Long,Double) - atomic  
+Long , Double -  64 bits long
+   1 write - lower 32 bits 
+   1 write - upper 32 bits 
+   2 operation involved => non -atomic 
+
+Volatile =>
+Tackle issues with cache coherence 
+Can be applied to Long,Double to behave atomically 
+Helpful to update data where multiple theadwith different cache access 
+    Makes the updated value visible to other threads 
+Volatile data => Processors flush immediately 
+Volatile Gurantees , shared data to be same for muti thread 
+Happens-Before memory ordering :
+    All the changes done by Thread A needs to be visible to thread B before accessing volatile data A , by this all prev changes before volatile data also piggyback and visible to Thread B .
+    
+
+
+Multithreading needs :
+Mutual exlusivity -> Sync locks 
+Visibility of shared resources -> volatile 
+
+Race condt -> concurrent  executions on non atomic shared operations 
+      Avoid by Atomic/Locks/sync 
+Data race -> out of order executions when multiple thread access same operations 
+      Avoid by  Happens before semantics 
+        sync/locks - only 1 thread at a time 
+        volatile - multi thread and avoid data race 
+
+Compiler and CPU may execute instructions out of order in a correct logical way  to optimize performance and to speed up the code .
+Rearrange happen for better 
+    Branch predictions - optimized loops
+    Vectorization- paralled instruction execution
+    Prefetching instruction -cache performance 
+    Hardware utilization 
+
+Race condt solutions :
+Sync 
+Volatile - for read/write from/to long and double 
+
+Data race solutions :
+Use happens before sematics 
+    Sync -> might go as single threaded application 
+    Volatile -> better option 
+
+Locking mechanism :
+Coarse Grained -> Less work , might lead to single thread 
+Fine Grained -> Multiple locks, more work , better parallelism 
+                    might lead to DeadLock 
+
+DeadLock :
+When to thread wait for each other to release a lock
+Conditions for DeadLock :
+Mutual Exclusion 
+Hold and Wait - atleast 1 thread is holding the resource and waiting for otherresource 
+Non Preemptive Allocation - Resource released only after thread is done using it 
+Circular wait - chain of at least two threads each one holding one 
+Solution :
+Avoid circlar wait 
+Order of accessing locks must be the same 
+Use Watchdog to detect deadlock 
+Thread interruption -> not for sync 
+tryLock 
+
