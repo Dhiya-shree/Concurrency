@@ -1,0 +1,144 @@
+
+Multiple thread 
+    - Data race 
+    - race condition 
+
+Use locks 
+    - performance overhead context switch 
+    - Thread priority , schedulinng issues 
+    - Dead lock 
+
+Lock Free Algorithm and DS
+   - Not useful for blocking IO 
+
+IO operations:
+Keyborad,mouse, IO can read and write into memory without CPU 
+using DMA - Direct memory access 
+CPU gives access for DMA and handles interruption 
+Other times CPU works on application threads 
+
+Non blocking IO application Optimize throughput by :
+Thread pooling - fixed size threads 
+Reuse thread and reduce performance overhead of creation, shutting down of threads 
+No of thread= No of cores 
+Above works considering only task involving CPU operation NOT blocking call 
+
+Blocking IO application :
+Ex:
+News website 
+Web applications 
+Big data/ML transforming application 
+
+
+Scenario 1:
+Single threaded Web app listens http request and connects to DB to get results 
+Consider: Single core 
+Thread pool : 1 
+Steps :
+Parse the user request - non blocking 
+Fetch data from DB - Blocking IO call --- Thread idle  
+Send response back to user - non blocking 
+
+Above is IO bound application in which most of time waiting / doing IO 
+While waiting for IO operation other request will not be served 
+
+Scenario 2:
+Multi threaded Web app + Cache listens http request and connects to DB to get results 
+Consider: 4 core 
+Thread pool : 4
+Steps :
+Parse the user request - non blocking 
+Fetch data from DB - Blocking IO call --- Thread idle  
+Send response back to user - non blocking 
+
+Above is IO bound application in which most of time waiting / doing IO 
+While waiting for IO operation other request will not be served , all thread may end up waiting for IO bound data 
+
+Thread - per- task Model :
+1 IO blocking all = 1sec 
+N tasks===> N seconds 
+
+Issue :
+Thread are expensive - no of thread limited 
+Thread consumen stack memory and other resources 
+Too many thread ---> out of memory exp. not able to create thread 
+Too few threads used -- lower throughput 
+
+Use Thread pool + ThreadPerTask:
+Reuse thread 
+Issues: 
+Price of context switch ==> CPU busy to run the OS thread scheduler 
+                to block and schedule so many threads 
+Leads to Threadshing ....
+ThreadShing -> CPU spent on OS managing system rather than application 
+
+Inversion of control :
+If a process is partly dependent on some externalservice 
+ On external service outage , all thread may queue up for access 
+   It leads to 100% thread waiting for external service response 
+Calls that do not need response will also not be processed 
+
+Thread per task model:
+1) Performance issues - contextswitch , resource usage 
+2) Stability issues - Inversion of control 
+
+NonBlockingIO 
+     - Does not block CPU operation 
+     - returns immediately 
+To use and extract non blocking IO call response => Callback 
+    nonBlockingIO(result->{
+        userData(result);
+    });
+
+Blocking IO :
+public void handleRequest(HttpExchange exchange){
+    Request request=parseUserRequest(exchange);
+    Response data=readFromDataBase(request);
+    sendPageToUser(data,exchange);
+}
+Non Blocking IO :
+public void handleRequest(HttpExchange exchange){
+    Request request=parseUserRequest(exchange);
+    readFromDataBaseAsync(request, (data)->{
+          sendPageToUser(data,exchange);
+    });
+}
+
+Non blocking IO Pro :
+  No blocking on IO calls 
+  No context switches 
+  callback assist to process data when received 
+  Single core enough 
+
+With non blocking IO , Thread per core = Optimal performace 
+
+Cons :
+
+Code readability poor - when multiple non-blocking call are nested 
+Call back hell 
+   NonBlock1(req1,( res1 )->{
+         NonBlock2(res1,(res2)->{
+            NonBlock3(res2,(res3)->{
+                .........
+            })
+         })
+   });
+
+Non blocking IO OS methods arehardto work with 
+JDK provides only a thin layer of abstraction 
+Use 3rd party library for Non blocking IO method wrapper 
+   -- netty 
+   -- vert.x
+   -- webflux
+
+                    Blocking IO +      Non Blocking IO +
+                 Thread per core        Thread per core
+     Performance High memory ,           Optimal 
+                 Context Switches high 
+Safety/Stability Inversion of Control    No issues
+    Code Writing     Easy                 Hard 
+    Code Reading     Easy                 Hard 
+         Testing     Easy                 Hard 
+       Debugging     Easy                 Hard 
+
+New Threading Model : Virtual Threads 
