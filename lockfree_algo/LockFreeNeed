@@ -1,0 +1,37 @@
+
+Limitation of lock :
+Deadlock unrecoverable
+Slow critial section 
+Priority Inversion 
+     Low priority thread can take hold of critical section 
+    OS might put on hold lower priority thread
+    OS schedule high priority thread , if it needs the shared resource of critial section 
+     Lead to unresponsiveness 
+Thread not releasea lock / interrupted when holding a lock 
+Performace overhead - on waiting for lock (context switch ) and scheduled back (context switch )
+
+
+Need for lock :
+Multiple thread access same resource 
+Thread modify resource 
+==>Non atomic operation ex) increment
+
+Solution : Use atomic 
+All primitive type ( except long and double)
+Volatile long and double 
+All references 
+Atomic class in concurrent.atomic package ( uses Unsafe class acessing low level native methods)
+
+Atomic Pro :
+No lock 
+No data race 
+No race condition 
+
+Atomic Con :
+Operation is atomic and not the value 
+Race condt. if two operation involved 
+
+Two different atomic operations are still not Thread safe 
+use=> Sync 
+
+AtomicReference 
