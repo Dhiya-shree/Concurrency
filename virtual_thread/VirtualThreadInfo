@@ -1,0 +1,114 @@
+Threads :
+
+Normal thread/ Platform Thread:
+JVM Thread ->object creation , createstack 
+         |
+OS       OS thread -> schedule and run 
+                |
+CPU            core 1 
+
+Thread => Thin wrapperon OS thread 
+Platform Thread => Thread n JVM 
+
+All platform thread is resource heavy 
+      ---> Platform thread maps 1-1 with limited OS thread 
+      ---> Platform thread consumes the limited stack space of JVM 
+
+
+Virtual Thraed :
+From JDK21 - New Thread type 
+JVM Virtual Thread ->Platform thread pool creation , create stack 
+            Virtual thread A -K          Virtual Thread L-Z
+                | | | | | | | |              | | |  | | | |   
+            Carrier Thread(A) --Stack       Platform Thread -- Stack 
+             |                                         |
+OS          OS thread      <No role for OS >       OS thread             
+                 |                                     |
+CPU            core 1                                  core 2 
+
+Virtual thread 
+On creation -> JVM creates a pool of platform thread with Stack 
+
+On Execution -> Virtual thread mounts on platform thread .
+  Carrier thread - platform threadexecuting Virtual thread 
+
+On execution completetion -> unmounts virtual thread from  carrier thread 
+    Carrier thread becomes platform thread available for other virtual thread to mount 
+    Virtual thread available for garbage collection 
+
+On execution waiting , Not able to progress execution 
+      -> unmounts virtual thread from carrier thread + save state in head 
+     Carrier thread becomes platform thread available for other virtual thread to mount 
+    Virtual thread state gets saved in stack and instraction pointer for later execution 
+    
+On execution resume :
+    JVM checks for available platform threads to amount the virtual thread 
+    If all platform thread are unavailable 
+      JVM unmounts one of the virtual thread and save state by stack and IP 
+      JVM mounts the paused Virtual thread for completion 
+
+Only CPU operations => Go ahead with normal thread 
+  Virtual thread will only give an abstraction 
+CPU + IO operation => When thread needs to wait , virtual thread are useful 
+
+Issue : Virtual thread - JVM 21 to 23 
+Thread Pining - when virtual thread gets stuck waiting on sync resource 
+              and not getting unmounted from carrier thread 
+
+Prior to J24,
+ JVM tied object monitor to carrier thread 
+       If virtual thread blocked while holding a object monitor inside synchronized 
+       it would pin the carrier thread until operation completes 
+
+JVM cannot suspend the thread safely when virtual thread calls native code ( JNI/Memory API)
+    it causes pinning it to carrier 
+
+
+Scenario 1:
+Single threaded Web app listens http request and connects to DB to get results 
+Consider: Single core 
+Thread pool : 1 
+Steps :
+Parse the user request - non blocking 
+Fetch data from DB - Blocking IO call --- Thread idle  
+Send response back to user - non blocking 
+
+Above is IO bound application in which most of time waiting / doing IO 
+While waiting for IO operation other request will not be served 
+
+Blocking IO - normal Thread :
+public void handleRequest(HttpExchange exchange){
+    Request request=parseUserRequest(exchange);
+    Response data=readFromDataBase(request);
+    sendPageToUser(data,exchange);
+}
+Blocking IO - Virtual Thread :
+public void handleRequest(HttpExchange exchange){
+    Request request=parseUserRequest(exchange);
+    Response data=readFromDataBase(request); //No CPU resource wastage , No context switch 
+    sendPageToUser(data,exchange);
+}
+
+Operation were virtual threads can be used :
+sleep 
+locks - reentrant lock 
+semaphore 
+Networking API - sockets 
+
+Mounting and Unnounting virtual thread has overhead 
+    But less than context switch 
+
+Performance - Virtual thread :
+Task involve only CPU ==> No enefit from virtual thread 
+Task involves T time to complete IO , even with virtual thread same latency 
+Virtual thread => Increase throughput 
+Virtual thread => Okay for short and frequent IO calls without context switch         
+       But best to batch short IO calls into less frequest and long IO operations 
+
+Best practice :
+No fixed sizepool - JVM takes care of it
+   newVirtualThreadperTaskExecutor 
+
+Virtual thread are always Daemon thread , setDaemon ==> exception 
+Virtual thread have default priority , setPriority ==> No works 
+Debugging => Harder  
